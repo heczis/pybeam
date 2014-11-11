@@ -122,14 +122,22 @@ class Beam:
         """
         Returns bending moment at x.
         """
-        pass
+        return (
+            +sum([fi.M(x, 0, x) for fi in self.loads])
+            -sum([rv * ri.M(x, 0, x)
+                  for ri, rv in zip(self.reactions, self.get_reactions())])
+        )
 
 if __name__ == '__main__':
     beam = Beam(
-        [PointLoad(1., .5),],
+        [ConstantContinuousLoad(1., 0., .5)],
         [PointLoad(1., 0.), PointLoad(1., 1.)],
         1.
     )
-    x = np.linspace(0, 1, 11)
-    plt.plot(x, [beam.traction(xi) for xi in x], '.-')
+    print('reactions:', beam.get_reactions())
+    x = np.linspace(0, 1, 51)
+    plt.plot(x, [beam.traction(xi) for xi in x], '.-', label='traction')
+    plt.plot(x, [beam.moment(xi) for xi in x], '.-', label='bending moment')
+    plt.legend(loc='best')
+    plt.grid()
     plt.show()
