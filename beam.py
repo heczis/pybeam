@@ -6,7 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Load:
+    """
+    Base class for PointLoad and Moment.
+    """
     def __init__(self, val, x):
+        """
+        val : value of the force/moment
+        x : its position along the beam
+        """
         self.val = val
         self.x = x
         return None
@@ -26,8 +33,8 @@ class PointLoad(Load):
 
     def M(self, x, a, b):
         """
-        Returns the resulting moment of the part of the load that
-        lies within the interval [a, b], w.r.t. point x.
+        Returns the resulting moment if the force lies within the
+        interval [a, b], w.r.t. point x.
         """
         if (self.x <= max(a, b)) and (self.x >= min(a, b)):
             return self.val * (self.x - x)
@@ -40,14 +47,14 @@ class Moment(Load):
     """
     def F(self, a, b):
         """
-        Resulting force on the interval [a, b] (always zero).
+        Resulting force - always zero.
         """
         return 0.
 
     def M(self, x, a, b):
         """
-        Returns the resulting moment of the part of the load that
-        lies within the interval [a, b], w.r.t. point x.
+        Returns the moment value if it lies within the interval
+        [a, b].
         """
         if (self.x <= max(a, b)) and (self.x >= min(a, b)):
             return self.val
@@ -56,7 +63,8 @@ class Moment(Load):
 
 class ConstantContinuousLoad:
     """
-    Constant continuous load of value val on the interval [a, b].
+    Constant continuous load of value val [N/m] on the interval
+    [a, b].
     """
     def __init__(self, val, a, b):
         self.val = val
@@ -65,21 +73,23 @@ class ConstantContinuousLoad:
 
     def F(self, a, b):
         """
-        Return the resultant force of the part of the load that
+        Return the resultant force [N] of the part of the load that
         lies within the interval [a, b].
         """
         return self.val * (min(self.b, b) - max(self.a, a))
 
     def M(self, x, a, b):
         """
-        Returns the resulting moment of the part of the load that
-        lies within the interval [a, b], w.r.t. point x.
+        Returns the resulting moment [N*m] of the part of the load
+        that lies within the interval [a, b], w.r.t. point x.
         """
         return self.F(a, b) * (.5*(max(self.a, a) + min(self.b, b)) - x)
 
 class Beam:
     """
     Represents a beam with loads, reactions, profile etc.
+    Provides computation of reactions and evaluation of traction 
+    and bending moment along the beam.
     """
     def __init__(self, loads, reactions, l, profile=None):
         """
@@ -96,9 +106,7 @@ class Beam:
 
     def get_reactions(self):
         """
-        A.R = b
-        each equation (i.e. line) corresponds to one point for
-        the momentum balance equation.
+        Returns actual values of reactions.
         """
         A = np.array([[
             ri.M(rj.x + jj*.1, 0, self.l)
