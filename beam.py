@@ -3,6 +3,7 @@ Contains data structures needed to represent a beam with given
 loads etc.
 """
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Load:
     def __init__(self, val, x):
@@ -102,15 +103,17 @@ class Beam:
         b = np.array([
             sum([fi.M(rj.x + jj*.1, 0, self.l) for fi in self.loads])
             for jj, rj in enumerate(self.reactions)])
-        print('A:\n', A)
-        print('b:\n', b)
         return np.linalg.solve(A, b)
 
     def traction(self, x):
         """
         Returns traction at x.
         """
-        pass
+        return (
+            -sum([fi.F(0, x) for fi in self.loads])
+            +sum([ri for ii, ri in enumerate(self.get_reactions())
+                   if self.reactions[ii].x <= x])
+        )
 
     def moment(self, x):
         """
@@ -120,8 +123,10 @@ class Beam:
 
 if __name__ == '__main__':
     beam = Beam(
-        [Moment(1., .5),],
+        [PointLoad(1., .5),],
         [PointLoad(1., 0.), PointLoad(1., 1.)],
         1.
     )
-    print('reactions:\n', beam.get_reactions())
+    x = np.linspace(0, 1, 11)
+    plt.plot(x, [beam.traction(xi) for xi in x], '.-')
+    plt.show()
