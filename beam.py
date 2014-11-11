@@ -76,7 +76,7 @@ class ConstantContinuousLoad:
         Return the resultant force [N] of the part of the load that
         lies within the interval [a, b].
         """
-        return self.val * (min(self.b, b) - max(self.a, a))
+        return self.val * max(min(self.b, b) - max(self.a, a), 0)
 
     def M(self, x, a, b):
         """
