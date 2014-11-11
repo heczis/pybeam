@@ -29,7 +29,10 @@ class PointLoad(Load):
         Returns the resulting moment of the part of the load that
         lies within the interval [a, b], w.r.t. point x.
         """
-        return self.val * (self.x - x)
+        if (self.x <= max(a, b)) and (self.x >= min(a, b)):
+            return self.val * (self.x - x)
+        else:
+            return 0.
 
 class Moment(Load):
     """
@@ -111,8 +114,8 @@ class Beam:
         """
         return (
             -sum([fi.F(0, x) for fi in self.loads])
-            +sum([ri for ii, ri in enumerate(self.get_reactions())
-                   if self.reactions[ii].x <= x])
+            +sum([ri * self.reactions[ii].F(0, x)
+                  for ii, ri in enumerate(self.get_reactions())])
         )
 
     def moment(self, x):
