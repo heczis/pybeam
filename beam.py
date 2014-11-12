@@ -3,6 +3,8 @@ Contains data structures needed to represent a beam with given
 loads etc.
 """
 import numpy as np
+from scipy.integrate import odeint
+from scipy.optimize import root
 import matplotlib.pyplot as plt
 
 class Load:
@@ -91,7 +93,7 @@ class Beam:
     Provides computation of reactions and evaluation of traction 
     and bending moment along the beam.
     """
-    def __init__(self, loads, reactions, l, profile=None):
+    def __init__(self, loads, reactions, l, E=1., Jz=1.):
         """
         loads : list of given loads (point loads, moments,...)
         reactions : list of unknown loads
@@ -101,7 +103,8 @@ class Beam:
         self.l = l
         self.loads = loads
         self.reactions = reactions
-        self.profile = profile
+        self.E = E
+        self.Jz = Jz
         return None
 
     def get_reactions(self):
@@ -109,10 +112,11 @@ class Beam:
         Returns actual values of reactions.
         """
         A = np.array([[
-            ri.M(rj.x + jj*.1, 0, self.l)
+            ri.M(rj.x + jj*.1, 0, self.l + .1*len(self.reactions))
             for ri in self.reactions] for jj, rj in enumerate(self.reactions)])
         b = np.array([
-            sum([fi.M(rj.x + jj*.1, 0, self.l) for fi in self.loads])
+            sum([fi.M(rj.x + jj*.1, 0, self.l + .1*len(self.reactions))
+                 for fi in self.loads])
             for jj, rj in enumerate(self.reactions)])
         return np.linalg.solve(A, b)
 
@@ -136,16 +140,64 @@ class Beam:
                   for ri, rv in zip(self.reactions, self.get_reactions())])
         )
 
+    def displacement(self, x):
+        """
+        Returns vertical displacement at the point x.
+        """
+        def dv(y, x):
+            """
+            y[0] : vertical displacement
+            y[1] : rotation
+            Returns a numpy array with 1st and 2nd derivative of
+            displacement.
+            """
+            return np.array([y[1], -self.moment(x) / self.E / self.Jz])
+
+        def disp_ivp(x, x0=np.zeros(2), step=.1):
+            """
+            Returns displacement and rotation at point x with initial
+            conditions x0.
+            """
+            ii = 1
+            if x > 0: ii = 5
+            return odeint(dv, x0, np.linspace(0, x, int(np.floor(x / step))+ii))[-1]
+
+        def r(x0):
+            """
+            Returns residual vector at locations of reactions.
+            """
+            out = np.zeros(len(self.reactions))
+            for ii, re in enumerate(self.reactions):
+                jj = 0
+                if type(re) == Moment: jj = 1
+                out[ii] = disp_ivp(re.x, x0)[jj]
+            return out
+
+        out = disp_ivp(x, root(r, np.zeros(2)).x)
+        return out
+
 if __name__ == '__main__':
+    l = 1.
     beam = Beam(
-        [ConstantContinuousLoad(1., 0., .5)],
-        [PointLoad(1., 0.), PointLoad(1., 1.)],
-        1.
+        [ConstantContinuousLoad(1., 0, .5*l)],
+        [PointLoad(1., 0.), PointLoad(1., l)],
+        l,
     )
     print('reactions:', beam.get_reactions())
-    x = np.linspace(0, 1, 51)
+    x = np.linspace(0, l, 51)
+
+    # plot traction and bending moment
     plt.plot(x, [beam.traction(xi) for xi in x], '.-', label='traction')
     plt.plot(x, [beam.moment(xi) for xi in x], '.-', label='bending moment')
     plt.legend(loc='best')
     plt.grid()
+
+    # plot deflection
+    v = np.array([beam.displacement(xi) for xi in x]).T
+    plt.figure()
+    plt.plot(x, v[0], '.-', label='vertical displacement')
+    plt.plot(x, v[1], '.-', label='rotation')
+    plt.legend(loc='best')
+    plt.grid()
+
     plt.show()
