@@ -90,7 +90,7 @@ class ConstantContinuousLoad:
 class Beam:
     """
     Represents a beam with loads, reactions, profile etc.
-    Provides computation of reactions and evaluation of traction 
+    Provides computation of reactions and evaluation of force 
     and bending moment along the beam.
     """
     def __init__(self, loads, reactions, l, E=1., Jz=1.):
@@ -120,9 +120,9 @@ class Beam:
             for jj, rj in enumerate(self.reactions)])
         return np.linalg.solve(A, b)
 
-    def traction(self, x):
+    def force(self, x):
         """
-        Returns traction at x.
+        Returns shear force at x.
         """
         return (
             -sum([fi.F(0, x) for fi in self.loads])
@@ -140,22 +140,22 @@ class Beam:
                   for ri, rv in zip(self.reactions, self.get_reactions())])
         )
 
-    def displacement(self, x):
+    def deflection(self, x):
         """
-        Returns vertical displacement at the point x.
+        Returns vertical deflection at the point x.
         """
         def dv(y, x):
             """
-            y[0] : vertical displacement
-            y[1] : rotation
+            y[0] : deflection
+            y[1] : angle of deflection
             Returns a numpy array with 1st and 2nd derivative of
-            displacement.
+            deflection.
             """
             return np.array([y[1], -self.moment(x) / self.E / self.Jz])
 
-        def disp_ivp(x, x0=np.zeros(2), step=.1):
+        def defl_ivp(x, x0=np.zeros(2), step=.1):
             """
-            Returns displacement and rotation at point x with initial
+            Returns deflection and angle of deflection at point x with initial
             conditions x0.
             """
             ii = 1
@@ -170,10 +170,10 @@ class Beam:
             for ii, re in enumerate(self.reactions):
                 jj = 0
                 if type(re) == Moment: jj = 1
-                out[ii] = disp_ivp(re.x, x0)[jj]
+                out[ii] = defl_ivp(re.x, x0)[jj]
             return out
 
-        out = disp_ivp(x, root(r, np.zeros(2)).x)
+        out = defl_ivp(x, root(r, np.zeros(2)).x)
         return out
 
 if __name__ == '__main__':
@@ -186,17 +186,17 @@ if __name__ == '__main__':
     print('reactions:', beam.get_reactions())
     x = np.linspace(0, l, 51)
 
-    # plot traction and bending moment
-    plt.plot(x, [beam.traction(xi) for xi in x], '.-', label='traction')
+    # plot force and bending moment
+    plt.plot(x, [beam.force(xi) for xi in x], '.-', label='shear force')
     plt.plot(x, [beam.moment(xi) for xi in x], '.-', label='bending moment')
     plt.legend(loc='best')
     plt.grid()
 
     # plot deflection
-    v = np.array([beam.displacement(xi) for xi in x]).T
+    v = np.array([beam.deflection(xi) for xi in x]).T
     plt.figure()
-    plt.plot(x, v[0], '.-', label='vertical displacement')
-    plt.plot(x, v[1], '.-', label='rotation')
+    plt.plot(x, v[0], '.-', label='deflection')
+    plt.plot(x, v[1], '.-', label='angle of deflection')
     plt.legend(loc='best')
     plt.grid()
 
