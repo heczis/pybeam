@@ -90,8 +90,28 @@ class ConstantContinuousLoad:
 class Beam:
     """
     Represents a beam with loads, reactions, profile etc.
-    Provides computation of reactions and evaluation of force 
-    and bending moment along the beam.
+    Provides computation of reactions and evaluation of force,
+    bending moment and its deflection and angle of deflection along
+    the beam.
+
+    Example of usage:
+    Simply supported beam of length 2 m with continuous load (50 N/m)
+    on its left half.
+    >>> l = 2
+    >>> loads = [ConstantContinuousLoad(50, 0, l/2),]
+
+    Reactions always have 1 as input value so that get_reactions returns
+    the actual value of reactions. Horizontal forces are not considered.
+    >>> reactions = [PointLoad(1, 0), PointLoad(1, l)]
+    >>> beam = Beam(loads, reactions, l)
+
+    Compute reactions:
+    >>> beam.get_reactions()
+    array([ 37.5,  12.5])
+
+    Compute deflection and angle of deflection in the middle of the beam:
+    >>> beam.deflection(l/2)
+    array([ 5.20833335, -1.04166668])
     """
     def __init__(self, loads, reactions, l, E=1., Jz=1.):
         """
