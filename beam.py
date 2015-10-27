@@ -164,7 +164,7 @@ class Beam:
                   for ri, rv in zip(self.reactions, self.get_reactions())])
         )
 
-    def deflection(self, x):
+    def deflection(self, x, tol=1e-8):
         """
         Returns vertical deflection at the point x.
         """
@@ -184,7 +184,9 @@ class Beam:
             """
             ii = 1
             if x > 0: ii = 5
-            return odeint(dv, x0, np.linspace(0, x, int(np.floor(x / step))+ii))[-1]
+            return odeint(
+                dv, x0, np.linspace(0, x, int(np.floor(x / step))+ii),
+                atol=tol, rtol=tol)[-1]
 
         def r(x0):
             """
@@ -197,7 +199,7 @@ class Beam:
                 out[ii] = defl_ivp(re.x, x0)[jj]
             return out
 
-        out = defl_ivp(x, root(r, np.zeros(2)).x)
+        out = defl_ivp(x, root(r, np.zeros(2), tol=tol).x)
         return out
 
 if __name__ == '__main__':
