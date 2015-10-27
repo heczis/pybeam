@@ -111,14 +111,15 @@ class Beam:
 
     Compute deflection and angle of deflection in the middle of the beam:
     >>> beam.deflection(l/2)
-    array([ 5.20833335, -1.04166668])
+    array([ 5.2083333 , -1.04166669])
     """
     def __init__(self, loads, reactions, l, E=1., Jz=1.):
         """
         loads : list of given loads (point loads, moments,...)
         reactions : list of unknown loads
         l : length of the beam (it starts at 0)
-        profile : suitable representation of profile (TBD)
+        E : Young's modulus
+        Jz : quadratic moment of the cross-section
         """
         self.l = l
         self.loads = loads
