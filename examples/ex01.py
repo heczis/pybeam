@@ -15,8 +15,10 @@ Dimensions of the cross-section (height H and width B) are to be determined so t
 Deflection and angle of deflection are to be determined at point
 C at the location a+b=0.8m.
 """
+import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from beam import Beam, ConstantContinuousLoad, PointLoad
 
 # known quantities
