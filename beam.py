@@ -123,6 +123,10 @@ class Beam:
         self.l = l
         self.loads = loads
         self.reactions = reactions
+        if not len(self.reactions) == 2: 
+            raise AssertionError(
+            "The number of reaction must be 2 (%r was given)" 
+            % len(self.reactions))
         self.E = E
         self.Jz = Jz
         return None
